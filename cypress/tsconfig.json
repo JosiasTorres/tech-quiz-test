@@ -3,5 +3,5 @@
       "types": ["cypress", "@testing-library/cypress"],
       "allowJs": true
     },
-    "include": ["**/*.cy.ts", "**/*.cy.js", "cypress/support"]
+    "include": ["**/*.cy.ts", "**/*.cy.js", "cypress/support", "cypress/component"]
   }
