@@ -1,6 +1,6 @@
-import './commands'; 
-import '@testing-library/cypress/add-commands'; 
-import { mount } from '@cypress/react18'; // ⚠️ Cambio aquí
+import './commands';
+import '@testing-library/cypress/add-commands';
+import { mount } from 'cypress/react18';
 
 declare global {
   namespace Cypress {
@@ -11,3 +11,4 @@ declare global {
 }
 
 Cypress.Commands.add('mount', mount);
+export {};
