@@ -1,4 +1,4 @@
-import { useState, } from 'react';
+import { useState } from 'react';
 import type { Question } from '../models/Question.js';
 import { getQuestions } from '../services/questionApi.js';
 
@@ -8,24 +8,29 @@ const Quiz = () => {
   const [score, setScore] = useState(0);
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [quizStarted, setQuizStarted] = useState(false);
+  const [loading, setLoading] = useState(false); // Estado para mostrar loading
 
   const getRandomQuestions = async () => {
+    setLoading(true);
     try {
-      const questions = await getQuestions();
+      const fetchedQuestions = await getQuestions();
 
-      if (!questions) {
-        throw new Error('something went wrong!');
+      if (!Array.isArray(fetchedQuestions) || fetchedQuestions.length === 0) {
+        throw new Error('No questions found!');
       }
 
-      setQuestions(questions);
+      setQuestions(fetchedQuestions);
+      setLoading(false);
     } catch (err) {
       console.error(err);
+      setQuestions([]); // Evita que questions sea undefined
+      setLoading(false);
     }
   };
 
   const handleAnswerClick = (isCorrect: boolean) => {
     if (isCorrect) {
-      setScore(score + 1);
+      setScore((prevScore) => prevScore + 1);
     }
 
     const nextQuestionIndex = currentQuestionIndex + 1;
@@ -37,19 +42,29 @@ const Quiz = () => {
   };
 
   const handleStartQuiz = async () => {
-    await getRandomQuestions();
     setQuizStarted(true);
     setQuizCompleted(false);
     setScore(0);
     setCurrentQuestionIndex(0);
+    await getRandomQuestions();
   };
 
   if (!quizStarted) {
     return (
       <div className="p-4 text-center">
-        <button className="btn btn-primary d-inline-block mx-auto" onClick={handleStartQuiz}>
+        <button className="btn btn-primary" onClick={handleStartQuiz}>
           Start Quiz
         </button>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="d-flex justify-content-center align-items-center vh-100">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
       </div>
     );
   }
@@ -61,19 +76,21 @@ const Quiz = () => {
         <div className="alert alert-success">
           Your score: {score}/{questions.length}
         </div>
-        <button className="btn btn-primary d-inline-block mx-auto" onClick={handleStartQuiz}>
+        <button className="btn btn-primary" onClick={handleStartQuiz}>
           Take New Quiz
         </button>
       </div>
     );
   }
 
-  if (questions.length === 0) {
+  // ✅ Validamos que `questions` y `currentQuestion` existan antes de renderizar
+  if (questions.length === 0 || !questions[currentQuestionIndex]) {
     return (
-      <div className="d-flex justify-content-center align-items-center vh-100">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
+      <div className="text-center p-4">
+        <p>No questions available. Please try again.</p>
+        <button className="btn btn-primary" onClick={handleStartQuiz}>
+          Retry
+        </button>
       </div>
     );
   }
@@ -84,12 +101,14 @@ const Quiz = () => {
     <div className='card p-4'>
       <h2>{currentQuestion.question}</h2>
       <div className="mt-3">
-      {currentQuestion.answers.map((answer, index) => (
-        <div key={index} className="d-flex align-items-center mb-2">
-          <button className="btn btn-primary" onClick={() => handleAnswerClick(answer.isCorrect)}>{index + 1}</button>
-          <div className="alert alert-secondary mb-0 ms-2 flex-grow-1">{answer.text}</div>
-        </div>
-      ))}
+        {currentQuestion.answers && currentQuestion.answers.map((answer, index) => (
+          <div key={index} className="d-flex align-items-center mb-2">
+            <button className="btn btn-primary" onClick={() => handleAnswerClick(answer.isCorrect)}>
+              {index + 1}
+            </button>
+            <div className="alert alert-secondary mb-0 ms-2 flex-grow-1">{answer.text}</div>
+          </div>
+        ))}
       </div>
     </div>
   );
